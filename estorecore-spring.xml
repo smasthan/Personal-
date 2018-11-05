@@ -1,0 +1,980 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!--
+ [y] hybris Platform
+
+ Copyright (c) 2000-2015 hybris AG
+ All rights reserved.
+
+ This software is the confidential and proprietary information of hybris
+ ("Confidential Information"). You shall not disclose such Confidential
+ Information and shall use it only in accordance with the terms of the
+ license agreement you entered into with hybris.
+-->
+
+<beans xmlns="http://www.springframework.org/schema/beans"
+	xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+	xmlns:context="http://www.springframework.org/schema/context"
+	xmlns:aop="http://www.springframework.org/schema/aop"
+	xsi:schemaLocation="http://www.springframework.org/schema/beans
+		http://www.springframework.org/schema/beans/spring-beans.xsd
+		http://www.springframework.org/schema/context
+		http://www.springframework.org/schema/context/spring-context.xsd
+		http://www.springframework.org/schema/aop
+		http://www.springframework.org/schema/aop/spring-aop.xsd">
+
+
+		<context:annotation-config/> 
+
+<!-- Spring Integration -->
+	<import resource="estorecore-spring-integration.xml"/>
+	
+	<import resource="classpath:/estorecore/integration/hot-folder-store-electronics-spring.xml"/>
+	<import resource="classpath:/estorecore/integration/hot-folder-store-apparel-spring.xml"/>
+	<import resource="classpath:/estorecore/integration/hot-folder-common-spring.xml"/>
+	<import resource="classpath:/estorecore/integration/hot-folder-store-estore-spring.xml"/>
+	
+<!-- Spring Integration -->
+	<import resource="estorecore-spring-integration.xml"/>
+	
+	<!-- SystemSetup for the EstoreCore -->
+	<bean id="acceleratorCoreSystemSetup" class="com.emc.estore.core.setup.CoreSystemSetup"  parent="abstractCoreSystemSetup"/>
+
+	<!-- Solr field value providers -->
+
+	<bean id="eStoreSolveForSource" parent="abstractCategorySource">
+		<property name="rootCategory" value="SolveFor"/> <!-- 'SolvFor' is the root of the SolvFor hierarchy -->
+	</bean>
+	<bean id="eStoreProductFamilySource" parent="abstractCategorySource">
+		<property name="rootCategory" value="ProductFamily"/> <!-- 'ProductFamily' is the root of the ProductFamily hierarchy -->
+	</bean>
+
+	<bean id="abstractCategoryCodeValueProvider" abstract="true" class="de.hybris.platform.commerceservices.search.solrfacetsearch.provider.impl.CategoryCodeValueProvider" parent="abstractPropertyFieldValueProvider">
+		<property name="fieldNameProvider" ref="solrFieldNameProvider"/>
+		<property name="commonI18NService" ref="commonI18NService"/>
+	</bean>
+	<bean id="abstractCategoryNameValueProvider" abstract="true" class="de.hybris.platform.commerceservices.search.solrfacetsearch.provider.impl.CategoryNameValueProvider" parent="abstractPropertyFieldValueProvider">
+		<property name="fieldNameProvider" ref="solrFieldNameProvider"/>
+		<property name="commonI18NService" ref="commonI18NService"/>
+	</bean>
+
+	<bean id="eStoreSolveForCodeValueProvider" parent="abstractCategoryCodeValueProvider">
+		<property name="categorySource" ref="eStoreSolveForSource"/>
+	</bean>
+	<bean id="eStoreProductFamilyCodeValueProvider" parent="abstractCategoryCodeValueProvider">
+		<property name="categorySource" ref="eStoreProductFamilySource"/>
+	</bean>
+	<bean id="eStoreSolveForNameValueProvider" parent="abstractCategoryNameValueProvider">
+		<property name="categorySource" ref="eStoreSolveForSource"/>
+	</bean>
+	<bean id="eStoreProductFamilyNameValueProvider" parent="abstractCategoryNameValueProvider">
+		<property name="categorySource" ref="eStoreProductFamilySource"/>
+	</bean>
+	
+	
+	<bean id="image515ValueProvider" parent="abstractImageValueProvider">
+		<property name="mediaFormat" value="515Wx515H"/>
+	</bean>
+	<bean id="image300ValueProvider" parent="abstractImageValueProvider">
+		<property name="mediaFormat" value="300Wx300H"/>
+	</bean>
+	<bean id="image96ValueProvider" parent="abstractImageValueProvider">
+		<property name="mediaFormat" value="96Wx96H"/>
+	</bean>
+	<bean id="image65ValueProvider" parent="abstractImageValueProvider">
+		<property name="mediaFormat" value="65Wx65H"/>
+	</bean>
+	<bean id="image30ValueProvider" parent="abstractImageValueProvider">
+		<property name="mediaFormat" value="30Wx30H"/>
+	</bean>	
+
+	<bean id="estorelocDao" class="com.emc.estore.core.dao.impl.DefaultEStoreLocatorDao" parent="abstractItemDao">
+	    <property name="flexibleSearchService" ref="flexibleSearchService"/>
+	    <property name="modelService" ref="modelService" />
+	</bean> 
+	
+	<bean id="productUrlValueProvider" class="de.hybris.platform.commerceservices.search.solrfacetsearch.provider.impl.ProductUrlValueProvider"  parent="abstractPropertyFieldValueProvider">
+		<property name="urlResolver" ref="productModelUrlResolver"/>
+		<property name="fieldNameProvider" ref="solrFieldNameProvider"/>
+		<property name="i18nService" ref="i18nService"/>
+		<property name="commonI18NService" ref="commonI18NService"/>
+	</bean>
+
+	<!--
+		Event listeners are singletons, therefore the dependency for a bean in tenant-scope
+		must be configured with a lookup method.
+	-->
+	<bean id="customerRegistrationEventListener" class="com.emc.estore.core.event.RegistrationEventListener" parent="abstractEventListener">
+		<lookup-method name="getModelServiceViaLookup" bean="modelService"/>
+	</bean>
+	<bean id="forgottenPasswordEventListener" class="com.emc.estore.core.event.ForgottenPasswordEventListener" parent="abstractEventListener">
+		<lookup-method name="getModelServiceViaLookup" bean="modelService"/>
+	</bean>
+	<bean id="submitOrderEventListener" class="com.emc.estore.core.event.SubmitOrderEventListener" parent="abstractEventListener">
+		<lookup-method name="getModelServiceViaLookup" bean="modelService"/>
+	</bean>
+	<bean id="orderConfirmationEventListener" class="com.emc.estore.core.event.OrderConfirmationEventListener" parent="abstractEventListener">
+		<lookup-method name="getModelServiceViaLookup" bean="modelService"/>
+	</bean>
+	<bean id="hcbPartnerEventListener" class="com.emc.estore.core.event.HCBPartnerEventListener" parent="abstractEventListener">
+		<lookup-method name="getModelServiceViaLookup" bean="modelService"/>
+	</bean>
+	<bean id="rfqEventListener" class="com.emc.estore.core.event.RFQQuoteEventListener" parent="abstractEventListener">
+		<lookup-method name="getModelServiceViaLookup" bean="modelService"/>
+	</bean>
+	<bean id="rfiEventListener" class="com.emc.estore.core.event.RFIQuoteEventListner" parent="abstractEventListener">
+		<lookup-method name="getModelServiceViaLookup" bean="modelService"/>
+	</bean>
+	<bean id="rfiExternalEventListener" class="com.emc.estore.core.event.RFIExternalQuoteEventListner" parent="abstractEventListener">
+		<lookup-method name="getModelServiceViaLookup" bean="modelService"/>
+	</bean>
+	<bean id="cpqEventListener" class="com.emc.estore.core.event.CPQQuoteEventListener" parent="abstractEventListener">
+		<lookup-method name="getModelServiceViaLookup" bean="modelService"/>
+	</bean>
+	
+	
+
+	<bean id="emcGeoCodeTool" class="com.emc.estore.core.storelocator.impl.DefaultEMCGoogleGeoCodeWrapper" parent="mygMapsGeoServiceWrapper" >
+	</bean>	
+	<bean id="defaultEstoreGeoLocatorService" class="com.emc.estore.core.storelocator.impl.DefaultEstoreGeoLocatorService" 
+	    parent="locationService" >
+	    <property name="pointOfServiceDao" ref="pointOfServiceDao"/>
+	    <property name="estorelocDao" ref="estorelocDao"/>
+	    <property name="mapService" ref="mapService"/>
+	    <property name="geoServiceWrapper" ref="geoServiceWrapper" />
+	    <property name="emcGeoCodeTool" ref="emcGeoCodeTool"/>
+	    <property name="i18nService" ref="i18nService" />
+	    <lookup-method name="lookupLocationMapService" bean="locationMapService"/>
+	</bean>
+	
+	
+ 	<!-- Process resourcess definition -->
+
+	<bean id="customerRegistrationEmailProcessDefinitionResource" class="de.hybris.platform.processengine.definition.ProcessDefinitionResource" >
+		<property name="resource" value="classpath:/estorecore/processes/customerRegistrationEmailProcess.xml"/>
+	</bean>
+	<bean id="forgottenPasswordEmailProcessDefinitionResource" class="de.hybris.platform.processengine.definition.ProcessDefinitionResource" >
+		<property name="resource" value="classpath:/estorecore/processes/forgottenPasswordEmailProcess.xml"/>
+	</bean>
+	<bean id="orderConfirmationEmailProcessDefinitionResource" class="de.hybris.platform.processengine.definition.ProcessDefinitionResource" >
+		<property name="resource" value="classpath:/estorecore/processes/orderConfirmationEmailProcess.xml"/>
+	</bean>
+	<bean id="hcbPartnerEmailProcessDefinitionResource" class="de.hybris.platform.processengine.definition.ProcessDefinitionResource" >
+		<property name="resource" value="classpath:/estorecore/processes/hcbPartnerEmailProcess.xml"/>
+	</bean>
+	
+	<bean id="rfqEmailProcessDefinitionResource" class="de.hybris.platform.processengine.definition.ProcessDefinitionResource" >
+		<property name="resource" value="classpath:/estorecore/processes/rfqEmailProcess.xml"/>
+	</bean>
+	
+	<bean id="rfiEmailProcessDefinitionResource" class="de.hybris.platform.processengine.definition.ProcessDefinitionResource" >
+		<property name="resource" value="classpath:/estorecore/processes/rfiEmailProcess.xml"/>
+	</bean>
+	<bean id="rfiExternalEmailProcessDefinitionResource" class="de.hybris.platform.processengine.definition.ProcessDefinitionResource" >
+		<property name="resource" value="classpath:/estorecore/processes/rfiExternalEmailProcess.xml"/>
+	</bean>
+	<bean id="cpqEmailProcessDefinitionResource" class="de.hybris.platform.processengine.definition.ProcessDefinitionResource" >
+		<property name="resource" value="classpath:/estorecore/processes/cpqEmailProcess.xml"/>
+	</bean>
+
+
+	<!-- Actions -->
+	<bean id="abstractAction" class="de.hybris.platform.processengine.action.AbstractAction"  abstract="true">
+		<property name="modelService" ref="modelService"/>
+		<property name="processParameterHelper" ref="processParameterHelper"/>
+	</bean>
+
+	<bean id="sendEmail" class="de.hybris.platform.acceleratorservices.process.email.actions.SendEmailAction"  parent="abstractAction">
+		<property name="emailService" ref="emailService"/>
+	</bean>
+
+	<bean id="hcbSendEmail" class="com.emc.estore.core.process.email.actions.HCBSendEmailAction"  parent="abstractAction">
+		<property name="emailService" ref="emailService"/>
+		<property name="configurationService" ref="configurationService"/>
+	</bean>
+	
+	<bean id="rfqSendEmail" class="com.emc.estore.core.process.email.actions.RfqSendEmailAction"  parent="abstractAction">
+		<property name="emailService" ref="emailService"/>
+		<property name="configurationService" ref="configurationService"/>
+	</bean>
+	
+	<bean id="rfiSendEmail" class="com.emc.estore.core.process.email.actions.RfiSendEmailAction"  parent="abstractAction">
+		<property name="emailService" ref="emailService"/>
+		<property name="configurationService" ref="configurationService"/>
+	</bean>
+	<bean id="rfiExternalSendEmail" class="com.emc.estore.core.process.email.actions.RfiExternalSendEmailAction"  parent="abstractAction">
+		<property name="emailService" ref="emailService"/>
+		<property name="configurationService" ref="configurationService"/>
+	</bean>
+	<bean id="cpqSendEmail" class="com.emc.estore.core.process.email.actions.CpqSendEmailAction"  parent="abstractAction">
+		<property name="emailService" ref="emailService"/>
+		<property name="configurationService" ref="configurationService"/>
+	</bean>
+	
+	<bean id="hcbFailedEmail" class="com.emc.estore.core.process.email.actions.HCBFailedEmailAction"  parent="abstractAction"/>
+	<bean id="rfqFailedEmail" class="com.emc.estore.core.process.email.actions.RfqFailedEmailAction"  parent="abstractAction"/>
+	<bean id="rfiFailedEmail" class="com.emc.estore.core.process.email.actions.RfiFailedEmailAction"  parent="abstractAction"/>
+	<bean id="rfiExternalFailedEmail" class="com.emc.estore.core.process.email.actions.RfiExternalFailedEmailAction"  parent="abstractAction"/>
+	<bean id="cpqFailedEmail" class="com.emc.estore.core.process.email.actions.CpqFailedEmailAction"  parent="abstractAction"/>
+
+	<bean id="hcbEmailGenerationService" class="com.emc.estore.core.process.email.impl.HCBEmailGenerationServiceImpl" parent="defaultEmailGenerationService" >
+	</bean>
+		
+	<bean id="rfqEmailGenerationService" class="com.emc.estore.core.process.email.impl.RfqEmailGenerationServiceImpl" parent="defaultEmailGenerationService" >
+	</bean>
+	
+	<bean id="rfiEmailGenerationService" class="com.emc.estore.core.process.email.impl.RfiEmailGenerationServiceImpl" parent="defaultEmailGenerationService" >
+	</bean>
+	
+	<bean id="rfiExternalEmailGenerationService" class="com.emc.estore.core.process.email.impl.RfiExternalEmailGenerationServiceImpl" parent="defaultEmailGenerationService" >
+	</bean>
+	
+	<bean id="cpqEmailGenerationService" class="com.emc.estore.core.process.email.impl.CpqEmailGenerationServiceImpl" parent="defaultEmailGenerationService" >
+	</bean>
+	
+	<bean id="generateCustomerRegistrationEmail" class="de.hybris.platform.acceleratorservices.process.email.actions.GenerateEmailAction"  parent="abstractAction">
+		<!-- rma: fixed circular reference issue with BTG 4/29/2011 -->
+		<property name="emailGenerationService" ref="emailGenerationService"/>
+		<property name="frontendTemplateName" value="CustomerRegistrationEmailTemplate"/>
+		<property name="cmsEmailPageService" ref="cmsEmailPageService"/>
+		<property name="contextResolutionStrategy" ref="processContextResolutionStrategy"/>
+	</bean>
+
+	<bean id="generateForgottenPasswordEmail" class="de.hybris.platform.acceleratorservices.process.email.actions.GenerateEmailAction"  parent="abstractAction">
+		<property name="cmsEmailPageService" ref="cmsEmailPageService"/>
+		<property name="frontendTemplateName" value="ForgottenPasswordEmailTemplate"/>
+		<property name="contextResolutionStrategy" ref="processContextResolutionStrategy"/>
+			<property name="emailGenerationService" ref="emailGenerationService"/>
+	</bean>
+
+	<bean id="generateOrderConfirmationEmail" class="de.hybris.platform.acceleratorservices.process.email.actions.GenerateEmailAction"  parent="abstractAction">
+		<property name="cmsEmailPageService" ref="cmsEmailPageService"/>
+		<property name="frontendTemplateName" value="OrderConfirmationEmailTemplate"/>
+		<property name="contextResolutionStrategy" ref="processContextResolutionStrategy"/>
+			<property name="emailGenerationService" ref="emailGenerationService"/>
+	</bean>
+           
+ 	<bean id="generateHcbPartnerEmail" class="de.hybris.platform.acceleratorservices.process.email.actions.GenerateEmailAction"  parent="abstractAction">
+		<property name="cmsEmailPageService" ref="cmsEmailPageService"/>
+		<property name="frontendTemplateName" value="HCBConfirmationEmailTemplate"/>
+		<property name="contextResolutionStrategy" ref="quoteProcessContextResolutionStrategy"/>
+		<property name="emailGenerationService" ref="hcbEmailGenerationService"/>
+	</bean>
+	
+	<bean id="generateRfqEmail" class="de.hybris.platform.acceleratorservices.process.email.actions.GenerateEmailAction"  parent="abstractAction">
+		<property name="cmsEmailPageService" ref="cmsEmailPageService"/>
+		<property name="frontendTemplateName" value="RFQEmailTemplate"/>
+		<property name="contextResolutionStrategy" ref="quoteProcessContextResolutionStrategy"/>
+		<property name="emailGenerationService" ref="rfqEmailGenerationService"/>
+	</bean>
+	
+	<bean id="generateRfiEmail" class="de.hybris.platform.acceleratorservices.process.email.actions.GenerateEmailAction"  parent="abstractAction">
+		<property name="cmsEmailPageService" ref="cmsEmailPageService"/>
+		<property name="frontendTemplateName" value="RFIEmailTemplate"/>
+		<property name="contextResolutionStrategy" ref="quoteProcessContextResolutionStrategy"/>
+		<property name="emailGenerationService" ref="rfiEmailGenerationService"/>
+	</bean>
+	
+	<bean id="generateRfiExternalEmail" class="de.hybris.platform.acceleratorservices.process.email.actions.GenerateEmailAction"  parent="abstractAction">
+		<property name="cmsEmailPageService" ref="cmsEmailPageService"/>
+		<property name="frontendTemplateName" value="RFIExternalEmailTemplate"/>
+		<property name="contextResolutionStrategy" ref="quoteProcessContextResolutionStrategy"/>
+		<property name="emailGenerationService" ref="rfiExternalEmailGenerationService"/>
+	</bean>
+	
+	<bean id="generateCpqEmail" class="de.hybris.platform.acceleratorservices.process.email.actions.GenerateEmailAction"  parent="abstractAction">
+		<property name="cmsEmailPageService" ref="cmsEmailPageService"/>
+		<property name="frontendTemplateName" value="CPQEmailTemplate"/>
+		<property name="contextResolutionStrategy" ref="quoteProcessContextResolutionStrategy"/>
+		<property name="emailGenerationService" ref="cpqEmailGenerationService"/>
+	</bean>
+	
+	<alias alias="quoteProcessContextResolutionStrategy" name="quoteProcessContextResolutionStrategy"/>
+	<bean id="quoteProcessContextResolutionStrategy" class="com.emc.estore.core.price.strategies.QuoteProcessContextResolutionStrategy"  parent="defaultProcessContextResolutionStrategy">
+		<property name="catalogVersionService" ref="catalogVersionService"/>
+		<property name="cmsSiteService" ref="cmsSiteService"/>
+		<property name="commonI18NService" ref="commonI18NService"/>
+		<property name="commerceCommonI18NService" ref="commerceCommonI18NService"/>
+		<property name="sessionService" ref="sessionService"/>
+		<property name="enableLanguageFallback" value="true"/>
+	</bean>
+	
+	<bean id="removeSentEmail" class="de.hybris.platform.acceleratorservices.process.email.actions.RemoveSentEmailAction"  parent="abstractAction">
+		<property name="modelService" ref="modelService"/>
+	</bean>
+
+	<!-- fulfilment -->
+
+	<alias alias="orderService" name="acceleratorDefaultOrderService"/>
+	<bean id="acceleratorDefaultOrderService" parent="defaultOrderService" >
+		<property name="submitOrderStrategies">
+			<list>
+				<!-- implementation that sends SubmitOrderEvent -->
+				<ref bean="eventPublishingSubmitOrderStrategy"/>
+			</list>
+		</property>
+	</bean>
+
+	<alias alias="orderSplittingService" name="acceleratorDefaultOrderSplittingService"/>
+	<bean id="acceleratorDefaultOrderSplittingService" parent="defaultOrderSplittingService" >
+		<property name="strategiesList">
+			<list>
+				<!--
+				<ref bean="splitByAvailableCount"/>
+				<ref bean="splitByDeliveryMode" />
+				<ref bean="splitByNamedDeliveryDate" />
+				<ref bean="splitByWarehouse" />
+				-->
+			</list>
+		</property>
+	</bean>
+
+	<!-- Simple Suggestion Service -->
+	<alias alias="simpleSuggestionService" name="defaultSimpleSuggestionService"/>
+	<bean id="defaultSimpleSuggestionService"	class="com.emc.estore.core.suggestion.impl.DefaultSimpleSuggestionService" >
+		<property name="simpleSuggestionDao" ref="simpleSuggestionDao"/>
+	</bean>
+	<alias alias="simpleSuggestionDao" name="defaultSimpleSuggestionDao"/>
+	<bean id="defaultSimpleSuggestionDao"	class="com.emc.estore.core.suggestion.dao.impl.DefaultSimpleSuggestionDao" parent="abstractItemDao" >
+		<property name="flexibleSearchService" ref="flexibleSearchService"/>
+	</bean>
+
+	<bean id="mccSiteUrlHelper" class="com.emc.estore.core.util.MccSiteUrlHelper">
+		<property name="siteBaseUrlResolutionService" ref="siteBaseUrlResolutionService"/>
+		<property name="cmsSiteService" ref="cmsSiteService"/>
+	</bean>
+	
+	<!-- Enable the @AspectJ support -->
+	<bean id="coreadvice" class="com.emc.estore.core.util.EstoreCoreLoggingAdvice"  />
+	
+	   <!-- <aop:aspectj-autoproxy />
+        
+        <context:load-time-weaver /> -->
+	
+	<!-- product prepare interceptors -->
+	
+	<bean id="estoreProductPrepareInterceptor"
+		class="com.emc.estore.core.interceptors.EstoreProductPrepareInterceptor"
+		 />
+		
+	
+	<bean id="estoreProductPrepareInterceptorMapping"
+		class="de.hybris.platform.servicelayer.interceptor.impl.InterceptorMapping"
+		>
+		<property name="interceptor" ref="estoreProductPrepareInterceptor" />
+		<property name="typeCode" value="Product" />
+	</bean>				
+	<!-- product prepare interceptors -->
+	
+	<bean id="estoreProductInitDefaultsInterceptor"
+		class="com.emc.estore.core.interceptors.EstoreProductInitDefaultsInterceptor"
+		 />
+		
+	<bean id="estoreProductInitDefaultsInterceptorMapping"
+		class="de.hybris.platform.servicelayer.interceptor.impl.InterceptorMapping"
+		>
+		<property name="interceptor" ref="estoreProductInitDefaultsInterceptor" />
+		<property name="typeCode" value="Product" />
+	</bean>				
+
+	<bean id="hcbPartnerValidateInterceptor"
+		class="com.emc.estore.core.interceptors.HcbPartnerValidateInterceptor"
+		>
+		<property name="typeService" ref="typeService" />
+	</bean>	
+	<bean id="hcbPartnerValidateInterceptorMapping"
+		class="de.hybris.platform.servicelayer.interceptor.impl.InterceptorMapping"
+		>
+		<property name="interceptor" ref="hcbPartnerValidateInterceptor" />
+		<property name="typeCode" value="Partner" />
+	</bean>	
+	
+	<bean id="itemUniqueAttributesValidatorMapping" class="de.hybris.platform.servicelayer.interceptor.impl.InterceptorMapping" >
+		<property name="interceptor" ref="hcbPartnerValidateInterceptor"/>
+		<property name="typeCode" value="Partner"/>
+	</bean>
+	
+	<!-- Customization of Cart Removal from Jalo Session -->
+	<bean id="jalosession"   class="de.hybris.platform.jalo.JaloSessionFactory">
+		<property name="targetClassName" value="com.emc.estore.core.jalo.EStoreCoreJaloSession"/>
+	</bean>
+	<!-- Customization of Cart Removal from Jalo Session -->
+
+	<!--  PasswordEncoder configuration starts -->
+		
+	<!-- not needed
+	<bean id="core.saltedSHA256PasswordEncoder" class="de.hybris.platform.persistence.security.SaltedPasswordEncoder">
+		<property name="salt" value="hybris blue pepper can be used to prepare delicious noodle meals" />
+		<property name="algorithmn" value="SHA-256" />
+	</bean>
+	
+	<bean id="core.passwordEncoderFactory" class="de.hybris.platform.persistence.security.PasswordEncoderFactoryImpl">
+		<property name="encoders">
+			<map>
+				<entry>
+					<key>
+						<value>*</value>
+					</key>
+					<ref bean="core.saltedSHA256PasswordEncoder" />
+				</entry>
+				<entry>
+					<key>
+						<value>sha256</value>
+					</key>
+					<ref bean="core.saltedSHA256PasswordEncoder" />
+				</entry>
+				<entry>
+					<key>
+						<value>md5</value>
+					</key>
+					<ref bean="core.saltedMD5PasswordEncoder" />
+				</entry>
+				<entry>
+					<key>
+						<value>plaintext</value>
+					</key>
+					<ref bean="core.plainTextEncoder" />
+				</entry>
+			</map>
+		</property>
+	</bean> 
+	  PasswordEncoder configuration ends -->
+	  
+
+	<bean id="core.passwordEncoderFactory" class="de.hybris.platform.persistence.security.PasswordEncoderFactoryImpl">
+		<property name="encoders">
+			<map>
+				<entry key="*" value-ref="${default.password.encoder}" />
+				<entry key="plain" value-ref="core.plainTextEncoder" />
+				<entry key="sha256" value-ref="sha256PasswordEncoder" />
+				<entry key="sha-256" value-ref="sha256PasswordEncoder" />
+				<entry key="sha-512" value-ref="sha512PasswordEncoder" />
+				<entry key="md5" value-ref="core.saltedMD5PasswordEncoder" />
+				<entry key="pbkdf2" value-ref="pbkdf2PasswordEncoder" />
+			</map>
+		</property>
+	</bean>
+		
+	<bean id="EStorePageService" class="com.emc.estore.core.service.impl.EStorePageServiceImpl" parent="defaultCMSPageService"  /> 
+
+ <!-- Country CMS Restriction  --> 
+ 
+	<bean id="cmsCountryRestrictionEvaluator" class="com.emc.estore.core.cms.restriction.CMSCountryRestrictionEvaluator" >
+			<property name="sessionService" ref="sessionService" />   
+	</bean>   
+   <bean id="cmsCountryRestrictionEvaluatorMapping" class="de.hybris.platform.cms2.servicelayer.services.evaluator.CMSRestrictionEvaluatorMapping" >
+		<property name="restrictionTypeCode" value="CMSCountryRestriction" />
+		<property name="restrictionEvaluator" ref="cmsCountryRestrictionEvaluator" />
+	</bean> 
+	<bean id="countryRestrictionDynamicDescription" class="com.emc.estore.core.cms.restriction.CountryRestrictionDynamicDescription"  />	
+	
+	<bean id="cmsHCBRestrictionEvaluator" class="com.emc.estore.core.cms.restriction.CMSHCBRestrictionEvaluator" >
+			<property name="sessionService" ref="sessionService" />   
+	</bean>
+	<bean id="cmsHCBRestrictionEvaluatorMapping" class="de.hybris.platform.cms2.servicelayer.services.evaluator.CMSRestrictionEvaluatorMapping" >
+		<property name="restrictionTypeCode" value="HCBPartnerRestriction" />
+		<property name="restrictionEvaluator" ref="cmsHCBRestrictionEvaluator" />
+	</bean>	
+	<bean id="hcbRestrictionDynamicDescription" class="com.emc.estore.core.cms.restriction.HCBRestrictionDynamicDescription"  />	
+	
+	<bean id="cmsPartnerRestrictionEvaluator" class="com.emc.estore.core.cms.restriction.CMSPartnerRestrictionEvaluator" >
+			<property name="sessionService" ref="sessionService" />   
+	</bean>
+	<bean id="cmsPartnerRestrictionEvaluatorMapping" class="de.hybris.platform.cms2.servicelayer.services.evaluator.CMSRestrictionEvaluatorMapping" >
+		<property name="restrictionTypeCode" value="PartnerRestriction" />
+		<property name="restrictionEvaluator" ref="cmsPartnerRestrictionEvaluator" />
+	</bean>	
+	<bean id="partnerRestrictionDynamicDescription" class="com.emc.estore.core.cms.restriction.PartnerRestrictionDynamicDescription"  />
+	
+	<bean id="cmsCategoryRestrictionEvaluator" class="com.emc.estore.core.cms.restriction.CMSCategoryRestrictionEvaluator" />
+    <bean id="CMSCategoryRestrictionEvaluatorMapping" class="de.hybris.platform.cms2.servicelayer.services.evaluator.CMSRestrictionEvaluatorMapping" >
+       <property name="restrictionTypeCode" value="CMSCategoryRestriction" />
+       <property name="restrictionEvaluator" ref="cmsCountryRestrictionEvaluator" />
+    </bean>
+	
+
+	   <bean id="partnerFinderDynamicAttr" class="com.emc.estore.core.storelocator.DynamicpartnerFinderEnabledHandler"  />
+ <!-- Country CMS Restriction   -->
+<!--  Added for B 24601 -->
+<alias alias="eStoreConstantsDao" name="defaultEStoreConstantsDao"/>
+<bean id="defaultEStoreConstantsDao" class="com.emc.estore.core.estoreconstants.dao.impl.DefaultEStoreConstantsDao" >
+       <property name="flexibleSearchService" ref="flexibleSearchService" />
+       </bean>
+       	
+<alias alias="eStoreConstantsService" name="defaulteStoreContantsService"/>
+       <bean id="defaulteStoreContantsService" class="com.emc.estore.core.estoreconstants.impl.DefaultEStoreConstantsService" >
+       <property name="eStoreConstantsDao" ref="eStoreConstantsDao" />
+       </bean>
+       
+	<alias alias="cartService" name="eStoreCartService"/>
+	<bean id="eStoreCartService" class="com.emc.estore.core.order.impl.EStoreCartServiceImpl" parent="defaultCartService" >
+ 	</bean>
+ 	
+ 	<bean id="eStoreCartDao" class="com.emc.estore.core.order.dao.impl.EStoreCartDaoImpl" parent="abstractItemDao" >
+	</bean>
+ 	   
+ <!--         
+<bean id="emcGeoCodeAddressesJob" class="com.emc.estore.core.cronjob.EMCGeoCodeAddressesJob" autowire="byName"  >
+	</bean>  -->	
+	<bean id="hcbProcessFailedEmailsJob" class="com.emc.estore.core.cronjob.HCBProcessFailedEmailsJob"  autowire="byName" >
+		<property name="quoteService" ref="quoteService" />
+		<property name="hcbUtil" ref="hcbUtil" />
+		<property name="eventService" ref="eventService" />
+		<property name="userService" ref="userService" />
+	</bean>
+	<bean id="rfqProcessFailedEmailsJob" class="com.emc.estore.core.cronjob.RFQProcessFailedEmailsJob"  autowire="byName" >
+		<property name="quoteService" ref="quoteService" />
+		<property name="hcbUtil" ref="hcbUtil" />
+		<property name="eventService" ref="eventService" />
+		<property name="userService" ref="userService" />
+	</bean>
+	<bean id="rfiProcessFailedEmailsJob" class="com.emc.estore.core.cronjob.RFIProcessFailedEmailsJob"  autowire="byName" >
+		<property name="quoteService" ref="quoteService" />
+		<property name="hcbUtil" ref="hcbUtil" />
+		<property name="eventService" ref="eventService" />
+		<property name="userService" ref="userService" />
+	</bean>
+	<bean id="rfiExternalProcessFailedEmailsJob" class="com.emc.estore.core.cronjob.RFIExternalProcessFailedEmailsJob"  autowire="byName" >
+		<property name="quoteService" ref="quoteService" />
+		<property name="hcbUtil" ref="hcbUtil" />
+		<property name="eventService" ref="eventService" />
+		<property name="userService" ref="userService" />
+	</bean>
+	<bean id="cpqProcessFailedEmailsJob" class="com.emc.estore.core.cronjob.CPQProcessFailedEmailsJob"  autowire="byName" >
+		<property name="quoteService" ref="quoteService" />
+		<property name="hcbUtil" ref="hcbUtil" />
+		<property name="eventService" ref="eventService" />
+		<property name="userService" ref="userService" />
+	</bean>	
+	<bean id="cartCleanUpJob" class="com.emc.estore.core.cronjob.CartCleanUpJob" autowire="byName" />
+	
+	<!-- Start changes to CleanupCronJobStrategy for JobLogs and LogFile -->	
+	<!-- <bean id="cleanUpLogsJobPerformable" parent="abstractGenericMaintenanceJobPerformable">
+        <property name="maintenanceCleanupStrategy">
+            <bean class="com.emc.estore.core.cronjob.EstoreCleanUpLogsJobPerformable">
+                <property name="modelService" ref="modelService"/>
+                <property name="flexibleSearchService" ref="flexibleSearchService"/>
+            </bean>
+        </property>
+    </bean>	 -->
+    <alias alias="cleanUpLogsJobPerformable" name="estoreCleanUpLogsJobPerformable"/>
+    <bean id="estoreCleanUpLogsJobPerformable" class="com.emc.estore.core.cronjob.EstoreCleanUpLogsJobPerformable" parent="abstractJobPerformable"/>
+    <!-- End of changes to CleanupCronJobStrategy for JobLogs and LogFile -->
+	
+	<!-- Start changes to handle database driven resource bundle -->
+	
+	<bean name="estoreResourceBundleCache" class="de.hybris.platform.regioncache.region.impl.EHCacheRegion">
+     <constructor-arg name="name" value="${resourcecacheregion.name}" />
+     <constructor-arg name="maxEntries" value="${resourcecacheregion.maxentries}" />
+     <constructor-arg name="evictionPolicy" value="${resourcecacheregion.evictionpolicy}" />
+     <property name="handledTypes">
+         <array>
+             <value>18047</value>
+         </array>
+     </property>
+	</bean>
+	<alias name="estoreCacheRegionList" alias="cacheRegionsList"/>
+	<bean id="estoreCacheRegionList" class="java.util.ArrayList">
+	    <constructor-arg>
+	        <list>
+	            <ref bean="typesystemCacheRegion"/>
+	            <ref bean="entityCacheRegion"/>
+	            <ref bean="queryCacheRegion"/>
+	            <ref bean="estoreResourceBundleCache"/>
+	        </list>
+	    </constructor-arg>
+   </bean>
+   
+	<bean id="estoreResourceService" class="com.emc.estore.core.service.EstoreResourceBundleService" >
+		<property name="searchService" ref="flexibleSearchService"/>
+	</bean>
+
+	
+	<!-- End changes to handle database driven resource bundle -->
+	<!-- Start UrlRedirects -->
+	<bean id="eStoreUrlRedirectService" class="com.emc.estore.core.service.impl.EstoreUrlRedirectServiceImpl" >
+		<property name="searchService" ref="flexibleSearchService"/>
+	</bean>
+	<!-- End UrlRedirects -->
+	<bean  id="productCopyCreator" class="com.emc.estore.core.service.copy.CustomProductCopyCreator">
+		<constructor-arg name="typeService" ref="typeService" />
+		<constructor-arg name="modelService" ref="modelService" />
+		<constructor-arg name="i18nService" ref="i18nService" />
+	</bean>
+	
+	
+	<alias name="customLoadStoreFeaturesStrategy" alias="loadStoreFeaturesStrategy" />
+	<bean id="customLoadStoreFeaturesStrategy"  class="com.emc.estore.core.classification.strategy.impl.CustomLoadStoreFeaturesStrategy" parent="defaultLoadStoreFeaturesStrategy" >
+		<property name="productFeaturesDao" ref="productFeaturesDao" />
+		<property name="modelService" ref="modelService" />
+		<property name="i18nService" ref="i18nService" />
+		<property name="commonI18nService" ref="commonI18NService" />
+		<property name="txTemplate">
+			<bean class="org.springframework.transaction.support.TransactionTemplate" scope="tenant">
+				<property name="transactionManager" ref="txManager" />
+			</bean>
+		</property>
+	</bean>
+
+
+	
+	
+	<alias name="estoreCustomerAccountDao" alias="customerAccountDao"/>
+	<bean id="estoreCustomerAccountDao"
+			class="com.emc.estore.core.dao.customer.impl.EstoreCustomerAccountDaoImpl"
+			parent="defaultCustomerAccountDao">
+		
+	</bean>
+	
+	<alias alias="customerAccountService" name="estoreCustomerAccountService"/>
+	<bean id="estoreCustomerAccountService"
+			class="com.emc.estore.core.service.customer.impl.EstoreCustomerAccountServiceImpl" parent="defaultCustomerAccountService">
+		
+	</bean>
+	
+		<alias alias="emailService" name="estoreEmailService"/>
+	<bean id="estoreEmailService"
+	      class="com.emc.estore.core.service.email.impl.EstoreEmailServiceImpl"
+	      parent="defaultEmailService">
+	</bean>
+	
+	<bean id="orphanedUserCleanupJob" class="com.emc.estore.core.cronjob.OrphanedUserCleanupJob" parent="abstractJobPerformable"  >
+	</bean>
+
+
+	<bean id="rfqJob" class="com.emc.estore.core.cronjob.RFQJob" autowire="byName"  >
+		<property name="modelService" ref="modelService"/>
+		<property name="emailService" ref="emailService"/>
+		<property name="quoteService" ref="quoteService"/>
+		<property name="rfqSubmissionservice" ref="rfqSubmissionservice"/>
+		<property name="lookUpConstantsService" ref="lookUpConstantsService"/>
+		<property name="salesProcessService" ref="salesProcessService"/>
+		<property name="emcPartnerService" ref="emcPartnerService"/>
+		<property name="priceUtility" ref="priceUtility"/>
+		<property name="sessionService" ref="sessionService"/>
+		<property name="commonI18NService" ref="commonI18NService"/>
+	</bean>
+	
+		<bean id="rsaRfqJob" class="com.emc.estore.core.cronjob.RsaRfqJob" autowire="byName"  >
+		<property name="quoteService" ref="quoteService"/>
+		<property name="lookUpConstantsService" ref="lookUpConstantsService"/>
+		<property name="sessionService" ref="sessionService"/>
+		<property name="emailService" ref="emailService"/>
+		<property name="priceUtility" ref="priceUtility"/>
+	</bean>
+	
+	<bean id="emcGeoCodeAddressesJob" class="com.emc.estore.core.cronjob.EMCGeoCodeAddressesJob" autowire="byName"  >
+</bean>
+
+<alias alias="commerceCommonI18NService" name="estoreCommerceCommonI18NService"/>
+	<bean id="estoreCommerceCommonI18NService" class="com.emc.estore.core.service.i18n.impl.EstoreCommerceCommonI18NServiceImpl" parent="defaultCommerceCommonI18NService">
+	</bean>
+	
+		<alias alias="commerceProductService" name="estoreCommerceProductService"/>
+	<bean id="estoreCommerceProductService" class="com.emc.estore.core.service.product.impl.EstoreCommerceproductServiceImpl" parent="defaultCommerceProductService">
+	</bean>
+			
+	<bean id="hcbUtil" class="com.emc.estore.core.util.HCBUtil"  />
+	
+	<bean id="emcPartnerService" class="com.emc.estore.core.service.partner.impl.DefaultEMCPartnerService" >
+	    <property name="estorelocDao" ref="estorelocDao"/>
+	</bean>
+	
+	<alias alias="salesProcessService" name="defaultSalesProcessService"/>
+    <bean id="defaultSalesProcessService" class="com.emc.estore.core.service.impl.DefaultSalesProcessService" >
+       <property name="salesProcessDao" ref="salesProcessDao" />
+    </bean>
+    
+    <alias alias="salesProcessDao" name="salesProcessDaoImpl"/>
+	<bean id="salesProcessDaoImpl" class="com.emc.estore.core.dao.impl.SalesProcessDaoImpl"  parent="abstractItemDao" />
+	
+	 	<!-- Simple Quote  Service -->
+	<alias alias="quoteService" name="defaultQuoteService"/>
+	<bean id="defaultQuoteService" class="com.emc.estore.core.service.quote.impl.DefaultQuoteService" parent="abstractOrderService" >
+	<property name="modelService" ref="modelService"/>
+	<property name="userService" ref="userService"/>
+	<property name="baseSiteService" ref="baseSiteService"/>
+	<property name="baseStoreService" ref="baseStoreService"/>
+	</bean>
+	
+	<alias name="defaultQuoteDao" alias="quoteDao"/>
+	<bean id="defaultQuoteDao" class="com.emc.estore.core.dao.quote.impl.DefaultQuoteDao" parent="abstractItemDao" >
+	</bean>
+	
+	<alias alias="lookUpConstantsService" name="defaultLoopUpContantsService"/>
+	<bean id="defaultLoopUpContantsService" class="com.emc.estore.core.service.impl.DefaultLookUpConstantsService" >
+	<property name="lookUpConstantsDao" ref="lookUpConstantsDao" />
+	</bean>
+	
+	<alias alias="lookUpConstantsDao" name="defaultLookUpConstantsDao"/>
+	<bean id="defaultLookUpConstantsDao" class="com.emc.estore.core.dao.impl.DefaultLookUpConstantsDao" >
+	<property name="flexibleSearchService" ref="flexibleSearchService" />
+	</bean>
+	
+	<alias name="priceUtility" alias="priceUtility" />
+	<bean id="priceUtility" class="com.emc.estore.core.service.price.impl.PriceUtility" >
+	</bean>
+	
+	<bean id="emcGoogleGeocodingServiceWrapper" class="com.emc.estore.core.geocoding.EMCGoogleGeocodingServiceWrapper" parent="mygMapsGeoServiceWrapper" >
+	</bean>
+	
+	<alias name="countryUtility" alias="countryUtility" />
+	<bean id="countryUtility" class="com.emc.estore.core.util.CountryUtility" scope="tenant">
+		<property name="sessionService" ref="sessionService"/>
+	</bean>	
+	
+	<alias alias="commerceCartService" name="estoreCommerceCartService"/>
+	<alias alias="estoreCommerceCartService" name="defaultEstoreCommerceCartService"/>
+	<bean id="defaultEstoreCommerceCartService" class="com.emc.estore.core.order.impl.DefaultEstoreCommerceCartService">
+		<property name="baseSiteService" ref="baseSiteService"/>
+		<property name="commerceCartDao" ref="commerceCartDao"/>
+		<property name="cartValidationStrategy" ref="cartValidationStrategy"/>
+		<property name="commerceCartCalculationStrategy" ref="commerceCartCalculationStrategy"/>
+		<property name="commerceCartEstimateTaxesStrategy" ref="commerceCartEstimateTaxesStrategy"/>
+		<property name="commerceCartHashCalculationStrategy" ref="commerceCartHashCalculationStrategy"/>
+		<property name="staleCartRemovalStrategy" ref="staleCartRemovalStrategy"/>
+		<property name="commerceAddToCartStrategy" ref="commerceAddToCartStrategy"/>
+		<property name="commerceUpdateCartEntryStrategy" ref="commerceUpdateCartEntryStrategy"/>
+		<property name="commerceCartRestorationStrategy" ref="commerceCartRestorationStrategy"/>
+		<property name="commerceCartSplitStrategy" ref="commerceCartSplitStrategy"/>
+		<property name="commerceRemoveEntriesStrategy" ref="commerceRemoveEntriesStrategy"/>
+		<property name="commerceCartMergingStrategy" ref="commerceCartMergingStrategy"/>
+		<property name="productService" ref="productService"/>
+		<property name="cartService" ref="cartService"/>
+		<property name="calculationService" ref="calculationService" />
+		<property name="modelService" ref="modelService" />
+		<property name="timeService" ref="timeService"/>
+		<property name="stockService" ref="stockService"/>
+		<property name="warehouseService" ref="warehouseService"/>
+		<property name="sessionService" ref="sessionService"/>  
+		<property name="productConfigurationStrategy" ref="productConfigurationStrategy"/>
+	</bean>
+	
+	<bean id="searchPageDao" class="com.emc.estore.core.search.dao.impl.DefaultSearchPageDao">
+	<property name="flexibleSearchService" ref="flexibleSearchService"/>
+    </bean>
+    
+    <alias name="defaultCommerceProductSearchService" alias="commerceProductSearchService"/>
+	<alias name="eStoreSolrProductSearchService" alias="defaultCommerceProductSearchService"/>
+	<bean id="eStoreSolrProductSearchService" class="com.emc.estore.core.search.solrfacetsearch.impl.DefaultEstoreSolrProductSearchService" parent="defaultCommerceSolrProductSearchService" >
+		<property name="searchPageDao" ref="searchPageDao"/>
+	</bean>
+
+	<alias alias="emcAuthenticationService" name="defaultEMCAuthenticationService"/>
+	<bean id="defaultEMCAuthenticationService" class="com.emc.estore.core.ngoeintegration.impl.DefaultEMCAuthenticationService" scope="tenant">
+	</bean>
+	
+	<bean id="savePartnerInfoService" class="com.emc.estore.core.service.partner.impl.SavePartnerInfoImpl">
+		<property name="partnerDao" ref="partnerDao"></property>
+	</bean>
+	
+	<bean id="partnerDao" class="com.emc.estore.core.dao.partner.impl.DefaultPartnerDao">
+	</bean>
+	
+	<alias name="estoreProductService" alias="productService"/>
+	<bean id="estoreProductService" class="com.emc.estore.core.service.product.impl.EstoreProductService" parent="abstractBusinessService">
+	<property name="productDao" ref="productDao" />
+		<property name="unitDao" ref="unitDao" />
+		<property name="priceService" ref="priceService" />
+	</bean>
+	
+	<!--  Venkat: Adding BusinessEnablerDao & BusinessEnablerService beans-->	
+
+	<alias name="defaultBusinessEnablerDao" alias="businessEnablerDao"/>
+	<bean id="defaultBusinessEnablerDao" class="com.emc.estore.core.business.dao.impl.DefaultBusinessEnablerDao" scope="tenant">
+		<property name="flexibleSearchService" ref="flexibleSearchService"/>
+	</bean>
+	
+	<alias alias="businessEnablerService" name="defaultBusinessEnablerService"/>
+	<bean id="defaultBusinessEnablerService" class="com.emc.estore.core.business.impl.DefaultBusinessEnablerService" scope="tenant">
+		<property name="businessEnablerDao" ref="businessEnablerDao"/>
+	</bean>
+	
+	<bean id="estoreLocalService" class="com.emc.estore.core.service.impl.EStoreLocaleServiceImpl"  />
+	
+	<bean id="emcUrlToCountryMappingDao" class="com.emc.estore.core.order.dao.impl.EMCUrlToCountryMappingDaoImpl" parent="abstractItemDao" scope="tenant">
+		<property name="lookUpConstantsService" ref="lookUpConstantsService"/>
+	</bean>
+	
+	<alias alias="emcUrlDao" name="defaultEmcUrlDao"/>
+	<bean id="defaultEmcUrlDao" class="com.emc.estore.core.dao.impl.EmcUrlDaoImpl" parent="abstractItemDao" >
+	</bean>
+	
+	<alias alias="emcUrlService" name="defaultEmcUrlService" />
+	<bean id="defaultEmcUrlService" class="com.emc.estore.core.service.impl.EmcUrlServiceImpl" >
+	</bean>
+	
+	<bean id="productCountriesValueProvider" class="com.emc.estore.core.search.solrfacetsearch.provider.impl.ProductCountriesValueProvider" parent="abstractPropertyFieldValueProvider" >
+		<property name="fieldNameProvider" ref="solrFieldNameProvider"/>
+	</bean>
+	
+	<alias alias="classificationPropertyValueProvider" name="estoreClassificationPropertyValueProvider" />
+	<bean id="estoreClassificationPropertyValueProvider" class="com.emc.estore.core.search.solrfacetsearch.provider.impl.EstoreClassificationPropertyValueProvider"  parent="abstractPropertyFieldValueProvider">
+		<property name="fieldNameProvider" ref="solrFieldNameProvider"/>
+	</bean>
+	
+	<bean id="eStoreCustomFacetSortProvider" class="com.emc.estore.core.search.solrfacetsearch.provider.impl.EStoreCustomFacetSortProvider" >
+	</bean>
+	
+	<bean id="productAccOrderingCountriesValueProvider"  class="com.emc.estore.core.search.solrfacetsearch.provider.impl.ProductAccOrderingCountriesValueProvider" parent="abstractPropertyFieldValueProvider">
+		<property name="fieldNameProvider" ref="solrFieldNameProvider"/>
+	</bean>
+	
+	<bean id="contentTypeNameValueProvider" class="com.emc.estore.core.search.solrfacetsearch.provider.impl.ContentTypeNameValueProvider" parent="abstractPropertyFieldValueProvider" >
+		<property name="fieldNameProvider" ref="solrFieldNameProvider"/>
+		<property name="commonI18NService" ref="commonI18NService"/>
+		<property name="sessionService" ref="sessionService"/>
+	</bean>
+	
+	<bean id="contentUrlValueProvider" class="com.emc.estore.core.search.solrfacetsearch.provider.impl.ContentUrlValueProvider" parent="abstractPropertyFieldValueProvider" >
+		<property name="fieldNameProvider" ref="solrFieldNameProvider"/>
+	</bean>
+	
+	<bean id="productAddOnValueProvider" class="com.emc.estore.core.search.solrfacetsearch.provider.impl.ProductAddOnValueProvider" parent="abstractPropertyFieldValueProvider" >
+		<property name="fieldNameProvider" ref="solrFieldNameProvider"/>
+		<property name="commonI18NService" ref="commonI18NService"/>
+		<property name="sessionService" ref="sessionService"/>
+	</bean>
+	
+	<bean id="productUserTypesValueProvider" class="com.emc.estore.core.search.solrfacetsearch.provider.impl.ProductUserTypesValueProvider" parent="abstractPropertyFieldValueProvider" >
+		<property name="fieldNameProvider" ref="solrFieldNameProvider"/>
+	</bean>
+	
+	
+	<bean id="estorePriceService" class="com.emc.estore.core.service.price.impl.EstorePriceServiceImpl"/>	
+	<bean id="cpqPriceService" class="com.emc.estore.core.service.price.impl.CPQPriceService"/> 
+	
+	<bean id="pricefactoryAfterSessionCreateListener" class="com.emc.estore.core.session.event.AfterSessionCreateEstorePricefactoryEventListener" parent="abstractEventListener"/>
+	
+	<bean id="cpqPriceStrategy" class="com.emc.estore.core.price.strategies.impl.CPQPriceStrategyImpl"/>
+	<bean id="defaultPriceStrategy" class="com.emc.estore.core.price.strategies.impl.DefaultPriceStrategyImpl"/>
+	
+	<bean id="priceStrategies" class="java.util.ArrayList">
+		<constructor-arg>
+	        <list>
+	            <ref bean="cpqPriceStrategy"/>
+				<ref bean="defaultPriceStrategy"/>
+	        </list>
+	    </constructor-arg>
+   </bean>
+   
+   <bean id="estorePriceFactory" class="com.emc.estore.core.jalo.EstorePriceFactory" parent="europe1.manager">
+    </bean>
+    
+     <bean id="estoreProductSearchService" class="com.emc.estore.core.search.solrfacetsearch.impl.DefaultEstoreSolrProductSearchService" parent="defaultCommerceSolrProductSearchService">
+     <property name="searchPageDao" ref="searchPageDao"></property>
+    </bean>
+    
+    <!--  Added for B-31904 - NUll SFDC Lead ID report --> 
+       <bean id="nullSfdcLeadIdJob" class="com.emc.estore.core.cronjob.NullSfdcLeadIdJob" autowire="byName" scope="tenant" >
+       </bean>
+    <!-- B31120 Product Decommissioning -->	
+	<alias alias="estoreProductReferencesDao" name="defaultEstoreProductReferencesDao"/>
+	<bean id="defaultEstoreProductReferencesDao" class="com.emc.estore.core.dao.product.impl.DefaultEstoreProductReferencesDao" parent="abstractItemDao" scope="tenant">
+	</bean>
+	
+	<alias alias="estoreProductReferencesService" name="defaultEstoreProductReferencesService"/>
+	<bean id="defaultEstoreProductReferencesService" class="com.emc.estore.core.service.product.impl.DefaultEstoreProductReferencesService" scope="tenant">
+	</bean>
+	
+	<!-- Defect 1527 #  Quantity gets reduced after copying the url from share link --> 
+	<alias name="defaultEstoreAbstractCommerceCartStrategy" alias="abstractCommerceCartStrategy"/>
+	<bean id="defaultEstoreAbstractCommerceCartStrategy"
+			class="de.hybris.platform.commerceservices.order.impl.AbstractCommerceCartStrategy" abstract="true">
+		<property name="productService" ref="productService"/>
+		<property name="cartService" ref="cartService"/>
+		<property name="modelService" ref="modelService"/>
+		<property name="baseStoreService" ref="baseStoreService"/>
+		<property name="commerceStockService" ref="commerceStockService"/>
+		<property name="entryOrderChecker" ref="commerceOrderEntryModifiableChecker"/>
+		<property name="cartEntryDao" ref="cartEntryDao"/>
+		<property name="commerceCartCalculationStrategy" ref="commerceCartCalculationStrategy"/>
+		<property name="forceInStockMaxQuantity" value="#{configurationService.configuration.getProperty('standard.cart.maxQuantity.limit')}"/>
+	</bean>
+ 
+
+
+ <!--  Modified for B-31404: Superscript capabilities in Display Name for Feature Values : Start -->
+       <alias name="eStoreCommerceSearchResponseFacetsPopulator" alias="commerceSearchResponseFacetsPopulator"/>
+       <bean id="eStoreCommerceSearchResponseFacetsPopulator" class="com.emc.estore.core.search.solrfacetsearch.populators.EstoreSearchResponseFacetsPopulator" scope="tenant">
+       <property name="classificationSystemService" ref="classificationSystemService"/>
+       </bean>
+       <!--  Modified for B-31404: Superscript capabilities in Display Name for Feature Values : Start -->
+		<alias name="eStoreCommerceSearchResponseBreadcrumbsPopulator" alias="commerceSearchResponseBreadcrumbsPopulator"/>
+       <bean id="eStoreCommerceSearchResponseBreadcrumbsPopulator" class="com.emc.estore.core.search.solrfacetsearch.populators.EstoreSearchResponseBreadcrumbsPopulator" scope="tenant">
+          <property name="classificationSystemService" ref="classificationSystemService"/>
+       </bean>
+	<bean id="priceTypeLookupService" class="com.emc.estore.core.service.PriceTypeLookupService" >
+		<property name="searchService" ref="flexibleSearchService"/>
+		<property name="i18nService" ref="i18nService"/>
+	</bean>
+              
+       	<alias name="defaultCommerceSearchFiltersPopulator" alias="commerceSearchFiltersPopulator"/>
+	<bean id="defaultCommerceSearchFiltersPopulator" class="com.emc.estore.core.search.solrfacetsearch.populators.EstoreSearchFiltersPopulator">
+		<property name="userService" ref="userService" />
+	</bean>
+ 
+	<alias name="defaultCommerceSearchResponseQueryPopulator" alias="commerceSearchResponseQueryPopulator" />
+	<bean id="defaultCommerceSearchResponseQueryPopulator" class="com.emc.estore.core.search.solrfacetsearch.populators.EstoreSearchResponseQueryPopulator" />
+
+	<alias name="defaultProductModelUrlResolver" alias="productModelUrlResolver"/>
+	<bean id="defaultProductModelUrlResolver"
+			class="com.emc.estore.storefront.url.EstoreProductModelUrlResolver">
+		<property name="threadContextService" ref="threadContextService"/>
+		<property name="commerceCategoryService" ref="commerceCategoryService"/>
+		<property name="baseSiteService" ref="baseSiteService"/>
+		<property name="defaultPattern" value="/{category-path}/{product-name}/p/{product-code}"/>
+	</bean>
+	
+	<bean id="estoreSiteMapContext"
+	      class="com.emc.estore.core.sitemap.renderer.EstoreSiteMapContext"
+	      scope="prototype">
+	    <property name="baseSiteService" ref="baseSiteService"/>
+		<property name="siteBaseUrlResolutionService" ref="siteBaseUrlResolutionService"/>
+		<property name="urlEncoderService" ref="urlEncoderService"/>
+	</bean>
+	
+	<bean id="estoreProductModelToSiteMapUrlDataPopulator"
+	      class="com.emc.core.sitemap.populators.EstoreProductModelToSiteMapUrlDataPopulator">
+		<property name="urlResolver" ref="productModelUrlResolver"/>
+	</bean>
+	
+	<alias name="estoreProductModelToSiteMapUrlDataConverter" alias="productModelToSiteMapUrlDataConverter"/>
+	<bean id="estoreProductModelToSiteMapUrlDataConverter" parent="abstractPopulatingConverter">
+		<property name="targetClass" value="com.emc.estore.core.sitemap.data.EstoreSiteMapUrlData"/>
+		<property name="populators">
+			<list>
+				<ref bean="estoreProductModelToSiteMapUrlDataPopulator"/>
+			</list>
+		</property>
+	</bean>
+	
+	<bean id="estoreSiteMapGenerator"
+	      class="com.emc.estore.core.sitemap.generator.EstoreSiteMapGenerator"
+	      abstract="true">
+		<property name="impersonationService" ref="impersonationService"/>
+		<property name="rendererService" ref="rendererService"/>
+		<property name="commonI18NService" ref="commonI18NService"/>
+		<property name="flexibleSearchService" ref="flexibleSearchService"/>
+		<property name="catalogVersionService" ref="catalogVersionService"/>
+	</bean>
+	
+	<alias name="estoreProductPageSiteMapGenerator" alias="productPageSiteMapGenerator"/>
+	<bean id="estoreProductPageSiteMapGenerator"
+	      class="com.emc.estore.core.sitemap.generator.EstoreProductPageSiteMapGenerator"
+	      parent="estoreSiteMapGenerator">
+		<property name="siteMapUrlDataConverter" ref="estoreProductModelToSiteMapUrlDataConverter"/>
+		<property name="siteMapPageEnum" value="PRODUCT"/>
+	</bean>
+	
+	<bean id="estoreCategoryService" class="com.emc.estore.core.category.impl.EstoreCategoryServiceImpl" parent="categoryService"/>
+	<bean id="estoreCategoryDao" class="com.emc.estore.core.category.dao.impl.EstoreCategoryDaoImpl" parent="categoryDao"/>
+	<bean id="estoreCtaDao" class="com.emc.estore.core.cta.dao.impl.EstoreCtaDaoImpl" />
+	<bean id="estoreCtaService" class="com.emc.estore.core.cta.service.impl.EstoreCtaServiceImpl" />
+	<bean id="estoreMediaContainerDao" class="com.emc.estore.core.mediacontainer.dao.impl.EstoreMediaContainerDaoImpl" />
+	<bean id="estoreMediaContainerService" class="com.emc.estore.core.mediacontainer.impl.EstoreMediaContainerServiceImpl"/>
+    <bean id="estoreOrphanedMediaCleanupJob" class="com.emc.estore.core.cronjob.EstoreOrphanedMediaCleanupJob" parent="abstractJobPerformable"/>
+	 <!-- /*Cronjob bean for EstoreDuplicateIdentifiersMediaCleanupJob to remove duplicate media Identifiers */ -->
+    <bean id="estoreDuplicateIdentifiersMediaCleanupJob" class="com.emc.estore.core.cronjob.EstoreDuplicateIdentifiersMediaCleanupJob" parent="abstractJobPerformable">
+    	<property name="flexibleSearchService" ref="flexibleSearchService"></property>
+    </bean>
+</beans>
